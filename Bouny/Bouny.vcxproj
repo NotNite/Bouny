@@ -22,7 +22,7 @@
         <VCProjectVersion>15.0</VCProjectVersion>
         <ProjectGuid>{EF064984-7D84-410D-B69D-F7C3CCD70731}</ProjectGuid>
         <Keyword>Win32Proj</Keyword>
-        <RootNamespace>RabbitSteel</RootNamespace>
+        <RootNamespace>Bouny</RootNamespace>
         <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
     </PropertyGroup>
     <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props"/>
@@ -95,7 +95,7 @@
             <ConformanceMode>true</ConformanceMode>
             <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
             <LanguageStandard>stdcpplatest</LanguageStandard>
-            <AdditionalIncludeDirectories>..\include;..\imgui;..\imgui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+            <AdditionalIncludeDirectories>..\include;..\imgui;..\imgui\backends;..\imgui\misc\cpp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
         </ClCompile>
         <Link>
             <SubSystem>Windows</SubSystem>
@@ -112,7 +112,7 @@
             <ConformanceMode>true</ConformanceMode>
             <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
             <LanguageStandard>stdcpplatest</LanguageStandard>
-            <AdditionalIncludeDirectories>..\include;..\imgui;..\imgui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+            <AdditionalIncludeDirectories>..\include;..\imgui;..\imgui\backends;..\imgui\misc\cpp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
         </ClCompile>
         <Link>
             <SubSystem>Windows</SubSystem>
@@ -131,7 +131,7 @@
             <ConformanceMode>true</ConformanceMode>
             <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
             <LanguageStandard>stdcpplatest</LanguageStandard>
-            <AdditionalIncludeDirectories>..\include;..\imgui;..\imgui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+            <AdditionalIncludeDirectories>..\include;..\imgui;..\imgui\backends;..\imgui\misc\cpp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
         </ClCompile>
         <Link>
             <SubSystem>Windows</SubSystem>
@@ -152,7 +152,7 @@
             <ConformanceMode>true</ConformanceMode>
             <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
             <LanguageStandard>stdcpplatest</LanguageStandard>
-            <AdditionalIncludeDirectories>..\include;..\imgui;..\imgui\backends;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+            <AdditionalIncludeDirectories>..\include;..\imgui;..\imgui\backends;..\imgui\misc\cpp;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
         </ClCompile>
         <Link>
             <SubSystem>Windows</SubSystem>
@@ -163,18 +163,21 @@
     </ItemDefinitionGroup>
     <ItemGroup>
         <ClCompile Include="dllmain.cpp"/>
-        <ClCompile Include="hooks.cpp" />
-        <ClCompile Include="ui_manager.cpp" />
+        <ClCompile Include="hooks.cpp"/>
+        <ClCompile Include="ui_manager.cpp"/>
+        <ClCompile Include="utils.cpp" />
     </ItemGroup>
     <ItemGroup>
         <ClCompile Include="../imgui/*.cpp"/>
         <ClCompile Include="../imgui/backends/imgui_impl_win32.cpp"/>
         <ClCompile Include="../imgui/backends/imgui_impl_dx11.cpp"/>
+        <ClCompile Include="../imgui/misc/cpp/imgui_stdlib.cpp"/>
     </ItemGroup>
     <ItemGroup>
-      <ClInclude Include="globals.h" />
-      <ClInclude Include="hooks.h" />
-      <ClInclude Include="ui_manager.h" />
+        <ClInclude Include="globals.h"/>
+        <ClInclude Include="hooks.h"/>
+        <ClInclude Include="ui_manager.h"/>
+        <ClInclude Include="utils.h" />
     </ItemGroup>
     <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets"/>
     <ImportGroup Label="ExtensionTargets">

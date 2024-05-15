@@ -1,7 +1,9 @@
 ﻿#include "ui_manager.h"
 #include "globals.h"
+#include "utils.h"
 
 #include <fstream>
+#include <numeric>
 
 void dump_for_ida()
 {
@@ -76,6 +78,7 @@ ui_manager::ui_manager()
     g_module_interface->Print(CM_LIGHTGREEN, "Registered all UI callbacks!");
 }
 
+
 void ui_manager::draw()
 {
     ImGui::ShowDemoWindow();
@@ -83,6 +86,46 @@ void ui_manager::draw()
     if (ImGui::Button("Dump for IDA"))
     {
         dump_for_ida();
+    }
+
+    static std::string buffer;
+    ImGui::InputText("Script name", &buffer);
+    if (ImGui::Button("Hook"))
+    {
+        auto script_name = std::string(buffer);
+        g_hooks->hook_script_runtime(buffer, [script_name](YYTK::CInstance* self, YYTK::CInstance* other,
+                                                           YYTK::RValue& return_value, int num_args,
+                                                           YYTK::RValue** args,
+                                                           ScriptFunction* trampoline)
+        {
+            trampoline(self, other, return_value, num_args, args);
+
+            if (num_args == 0)
+            {
+                g_module_interface->Print(CM_GRAY, "%s() -> %s", script_name.c_str(),
+                                          utils::rvalue_to_string(&return_value).c_str());
+            }
+            else
+            {
+                std::string args_str = std::accumulate(args, args + num_args, std::string{},
+                                                       [](std::string acc, YYTK::RValue* arg)
+                                                       {
+                                                           return acc + utils::rvalue_to_string(arg) + ", ";
+                                                       });
+
+                // remove last ,
+                args_str.pop_back();
+                args_str.pop_back();
+
+                g_module_interface->Print(CM_GRAY, "%s(%s) -> %s", script_name.c_str(), args_str.c_str(),
+                                          utils::rvalue_to_string(&return_value).c_str());
+            }
+        });
+    }
+
+    if (ImGui::Button("Unhook"))
+    {
+        g_hooks->unhook_script(buffer);
     }
 }
 
