@@ -82,51 +82,112 @@ ui_manager::ui_manager()
 void ui_manager::draw()
 {
     ImGui::ShowDemoWindow();
-    ImGui::Checkbox("Cheat damage", &g_config.cheat_damage);
-    if (ImGui::Button("Dump for IDA"))
-    {
-        dump_for_ida();
-    }
 
-    static std::string buffer;
-    ImGui::InputText("Script name", &buffer);
-    if (ImGui::Button("Hook"))
+    if (ImGui::Begin("Stuff"))
     {
-        auto script_name = std::string(buffer);
-        g_hooks->hook_script_runtime(buffer, [script_name](YYTK::CInstance* self, YYTK::CInstance* other,
-                                                           YYTK::RValue& return_value, int num_args,
-                                                           YYTK::RValue** args,
-                                                           ScriptFunction* trampoline)
+        ImGui::Checkbox("Cheat damage", &g_config.cheat_damage);
+        if (ImGui::Button("Dump for IDA"))
         {
-            trampoline(self, other, return_value, num_args, args);
+            dump_for_ida();
+        }
 
-            if (num_args == 0)
+        static std::string buffer;
+        ImGui::InputText("Script name", &buffer);
+        if (ImGui::Button("Hook"))
+        {
+            auto script_name = std::string(buffer);
+            g_hooks->hook_script_runtime(buffer, [script_name](YYTK::CInstance* self, YYTK::CInstance* other,
+                                                               YYTK::RValue& return_value, int num_args,
+                                                               YYTK::RValue** args,
+                                                               ScriptFunction* trampoline)
             {
-                g_module_interface->Print(CM_GRAY, "%s() -> %s", script_name.c_str(),
-                                          utils::rvalue_to_string(&return_value).c_str());
-            }
-            else
-            {
-                std::string args_str = std::accumulate(args, args + num_args, std::string{},
-                                                       [](std::string acc, YYTK::RValue* arg)
-                                                       {
-                                                           return acc + utils::rvalue_to_string(arg) + ", ";
-                                                       });
+                trampoline(self, other, return_value, num_args, args);
 
-                // remove last ,
-                args_str.pop_back();
-                args_str.pop_back();
+                if (num_args == 0)
+                {
+                    g_module_interface->Print(CM_GRAY, "%s() -> %s", script_name.c_str(),
+                                              utils::rvalue_to_string(&return_value).c_str());
+                }
+                else
+                {
+                    std::string args_str = std::accumulate(args, args + num_args, std::string{},
+                                                           [](std::string acc, YYTK::RValue* arg)
+                                                           {
+                                                               return acc + utils::rvalue_to_string(arg) + ", ";
+                                                           });
 
-                g_module_interface->Print(CM_GRAY, "%s(%s) -> %s", script_name.c_str(), args_str.c_str(),
-                                          utils::rvalue_to_string(&return_value).c_str());
-            }
-        });
+                    // remove last ,
+                    args_str.pop_back();
+                    args_str.pop_back();
+
+                    g_module_interface->Print(CM_GRAY, "%s(%s) -> %s", script_name.c_str(), args_str.c_str(),
+                                              utils::rvalue_to_string(&return_value).c_str());
+                }
+            });
+        }
+
+        if (ImGui::Button("Unhook"))
+        {
+            g_hooks->unhook_script(buffer);
+        }
     }
 
-    if (ImGui::Button("Unhook"))
+    ImGui::End();
+
+    if (ImGui::Begin("Room"))
     {
-        g_hooks->unhook_script(buffer);
+        CRoom* room = nullptr;
+        g_module_interface->GetCurrentRoomData(room);
+
+        if (room == nullptr)
+        {
+            ImGui::Text("Instance was null.");
+        }
+        else
+        {
+            auto layers = room->m_Layers;
+            auto layer = layers.m_First;
+            while (layer != nullptr)
+            {
+                ImGui::Text("name=%s id=%d", layer->m_Name, layer->m_Id);
+
+                auto elements = layer->m_Elements;
+                auto element = elements.m_First;
+                while (element != nullptr)
+                {
+                    ImGui::Text("  name=%s id=%d type=%d", element->m_Name, element->m_ID, element->m_Type);
+                    if (element->m_Type == 2)
+                    {
+                        auto instance = reinterpret_cast<CLayerInstanceElement*>(element);
+                        if (instance->m_Instance != nullptr)
+                        {
+                            g_module_interface->EnumInstanceMembers(
+                                RValue(instance->m_Instance),
+                                [](const char* name, RValue* value) -> bool
+                                {
+                                    if (name == nullptr || value == nullptr || value->m_Kind == VALUE_UNSET)
+                                        return false;
+                                    ImGui::Text(
+                                        "      %s=%s", name,
+                                        value->AsString().data()
+                                    );
+                                    return false;
+                                });
+                        }
+                    }
+                    if (element->m_Type == 4)
+                    {
+                        auto sprite = reinterpret_cast<CLayerSpriteElement*>(element);
+                        ImGui::Text("    sprite=%s", sprite->m_SpriteIndex);
+                    }
+                    element = element->m_Flink;
+                }
+
+                layer = layer->m_Flink;
+            }
+        }
     }
+    ImGui::End();
 }
 
 void ui_manager::frame_callback(YYTK::FWFrame& FrameContext)

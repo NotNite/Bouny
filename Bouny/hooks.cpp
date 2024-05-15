@@ -2,23 +2,24 @@
 #include "globals.h"
 #include <array>
 
-static constexpr char pattern_deal_damage_enemy[] = "gml_Script_scr_pattern_deal_damage_enemy";
-static constexpr char pattern_deal_damage_enemy_subtract[] = "gml_Script_scr_pattern_deal_damage_enemy_subtract";
+static constexpr char scr_pattern_deal_damage_enemy[] = "gml_Script_scr_pattern_deal_damage_enemy";
+static constexpr char scr_pattern_deal_damage_enemy_subtract[] = "gml_Script_scr_pattern_deal_damage_enemy_subtract";
 
 hooks::hooks()
 {
-    hook_script<pattern_deal_damage_enemy>([](YYTK::CInstance* self, YYTK::CInstance* other,
-                                              YYTK::RValue& return_value, int num_args,
-                                              YYTK::RValue** args, ScriptFunction* trampoline)
+    hook_script<scr_pattern_deal_damage_enemy>([](YYTK::CInstance* self, YYTK::CInstance* other,
+                                                  YYTK::RValue& return_value, int num_args,
+                                                  YYTK::RValue** args, ScriptFunction* trampoline)
     {
         return_value = trampoline(self, other, return_value, num_args, args);
         g_module_interface->Print(CM_LIGHTGREEN, "deal_damage returned: %s",
                                   return_value.AsString().data());
     });
 
-    hook_script<pattern_deal_damage_enemy_subtract>([](YYTK::CInstance* self, YYTK::CInstance* other,
-                                                       YYTK::RValue& return_value,
-                                                       int num_args, YYTK::RValue** args, ScriptFunction* trampoline)
+    hook_script<scr_pattern_deal_damage_enemy_subtract>([](YYTK::CInstance* self, YYTK::CInstance* other,
+                                                           YYTK::RValue& return_value,
+                                                           int num_args, YYTK::RValue** args,
+                                                           ScriptFunction* trampoline)
     {
         if (g_config.cheat_damage) args[2]->m_Real = 42069;
         return_value = trampoline(self, other, return_value, num_args, args);
