@@ -1,7 +1,7 @@
 ﻿#include "hooks.h"
 #include "globals.h"
 
-static int* current_hook_id = reinterpret_cast<int*>(malloc(sizeof(int)));
+static int* current_hook_id = static_cast<int*>(malloc(sizeof(int)));
 static int hook_index = 0;
 
 hooks::hooks()
