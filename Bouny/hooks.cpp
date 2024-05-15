@@ -1,8 +1,13 @@
 ﻿#include "hooks.h"
 #include "globals.h"
 
+static int* current_hook_id = reinterpret_cast<int*>(malloc(sizeof(int)));
+static int hook_index = 0;
+
 hooks::hooks()
 {
+    *current_hook_id = -1;
+    
     hook_script("scr_pattern_deal_damage_enemy_subtract",
                 [](YYTK::CInstance* self, YYTK::CInstance* other,
                    YYTK::RValue& return_value, int num_args, YYTK::RValue** args,
@@ -13,17 +18,14 @@ hooks::hooks()
                 });
 }
 
-static int current_hook_id = 0;
-static int hook_index = 0;
-
 YYTK::RValue& detour_func(YYTK::CInstance* self, YYTK::CInstance* other, YYTK::RValue& return_value,
                           int num_args, YYTK::RValue** args)
 {
-    auto original = hooks::original_map[current_hook_id];
-
-    if (hooks::detour_map.contains(current_hook_id))
+    auto id = *current_hook_id;
+    auto original = hooks::original_map[id];
+    if (hooks::detour_map.contains(id))
     {
-        hooks::detour_map[current_hook_id](self, other, return_value, num_args, args, original);
+        hooks::detour_map[id](self, other, return_value, num_args, args, original);
     }
     else
     {
@@ -55,7 +57,11 @@ int hooks::hook_script(
 
     auto hook_id = hook_index;
 
-    assembler.mov(asmjit::x86::ptr(current_hook_id), hook_id);
+    auto immediate = asmjit::Imm(hook_id);
+    auto ptr = reinterpret_cast<uint64_t>(current_hook_id);
+    auto dest = asmjit::x86::ptr(ptr, 4);
+
+    assembler.long_().mov(dest, immediate);
     assembler.jmp(detour_func);
 
     GeneratedDetourFunction detour;
