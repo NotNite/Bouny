@@ -10,3 +10,5 @@ x86/
 *.user
 /local
 dump.txt
+
+/vcpkg_installed*/
