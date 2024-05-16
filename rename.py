@@ -159,7 +159,7 @@ def handle_vars(addr):
             ida_bytes.get_qword(variable), -1, ida_nalt.STRTYPE_C
         )
         string = string.decode("utf-8")
-        idaapi.set_name(variable - 8, f"var_{string}", idaapi.SN_FORCE)
+        idaapi.set_name(variable + 8, f"var_{string}", idaapi.SN_FORCE)
 
         addr += 8
 
@@ -182,7 +182,7 @@ def handle_funcs(addr):
             break
         func_name = func_name.decode("utf-8")
 
-        reference = func_addr - 8
+        reference = func_addr + 8
         idaapi.set_name(reference, f"func_{func_name}", idaapi.SN_FORCE)
 
         addr += 8

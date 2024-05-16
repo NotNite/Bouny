@@ -18,6 +18,7 @@ public:
     hooks();
 
     int hook_script(std::string_view script_name, ScriptDetour callback);
+    ScriptFunction* get_script(std::string_view script_name);
     void unhook_script(int id);
 
     inline static asmjit::JitRuntime runtime;

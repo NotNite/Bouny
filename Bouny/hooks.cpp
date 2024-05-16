@@ -1,6 +1,5 @@
 ﻿#include "hooks.h"
 #include "globals.h"
-#include "utils.h"
 
 static int* current_hook_id = static_cast<int*>(malloc(sizeof(int)));
 static int hook_index = 0;
@@ -17,6 +16,19 @@ hooks::hooks()
                     if (g_config.cheat_damage) args[2]->m_Real = 42069;
                     return_value = original(self, other, return_value, num_args, args);
                 });
+
+    /*hook_script("bpatt_add", [](YYTK::CInstance* self, YYTK::CInstance* other,
+                                YYTK::RValue& return_value, int num_args, YYTK::RValue** args,
+                                ScriptFunction* original)
+    {
+        return_value = original(self, other, return_value, num_args, args);
+        static bool triggered = false;
+        if (!triggered)
+        {
+            triggered = true;
+            g_hooks->get_script("bp_examples")(self, other, return_value, 0, nullptr);
+        }
+    });*/
 }
 
 YYTK::RValue& detour_func(YYTK::CInstance* self, YYTK::CInstance* other, YYTK::RValue& return_value,
@@ -36,10 +48,7 @@ YYTK::RValue& detour_func(YYTK::CInstance* self, YYTK::CInstance* other, YYTK::R
     return return_value;
 }
 
-int hooks::hook_script(
-    std::string_view script_name,
-    ScriptDetour callback
-)
+ScriptFunction* hooks::get_script(std::string_view script_name)
 {
     auto runner = g_module_interface->GetRunnerInterface();
     auto id = runner.Script_Find_Id(script_name.data()) - 100000;
@@ -49,6 +58,22 @@ int hooks::hook_script(
     if (!AurieSuccess(status) || script == nullptr)
     {
         g_module_interface->Print(CM_LIGHTRED, "Failed to get script data for %s", script_name.data());
+        return nullptr;
+    }
+
+    return script->m_Functions->m_ScriptFunction;
+}
+
+
+int hooks::hook_script(
+    std::string_view script_name,
+    ScriptDetour callback
+)
+{
+    auto fn = get_script(script_name);
+    if (fn == nullptr)
+    {
+        g_module_interface->Print(CM_LIGHTRED, "Failed to get script %s", script_name.data());
         return -1;
     }
 
@@ -73,7 +98,7 @@ int hooks::hook_script(
     void* original = nullptr;
     MmCreateHook(g_module,
                  "Bouny-" + std::to_string(hook_id),
-                 script->m_Functions->m_ScriptFunction,
+                 fn,
                  detour,
                  &original);
     original_map[hook_id] = reinterpret_cast<ScriptFunction*>(original);
