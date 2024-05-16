@@ -21,7 +21,7 @@ hooks::hooks()
         if (!tailwinds_triggered && g_config.tailwinds)
         {
             tailwinds_triggered = true;
-            auto arg = RValue(g_module_interface->GetRunnerInterface().Script_Find_Id("bp_examples"));
+            auto arg = RValue(g_module_interface->GetRunnerInterface().Script_Find_Id("bp_tailwind_permanent"));
             RValue* arg_ptr = &arg;
             auto arg_array = &arg_ptr;
             original(self, other, return_value, 1, arg_array);
@@ -33,7 +33,6 @@ hooks::hooks()
     hook_script("scrdt_encounter",
                 [](auto self, auto other, auto& return_value, auto num_args, auto args, auto original)
                 {
-                    g_module_interface->Print(CM_LIGHTGREEN, "encounter, ret %p", original);
                     tailwinds_triggered = false;
                     return_value = original(self, other, return_value, num_args, args);
                 });
