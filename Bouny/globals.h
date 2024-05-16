@@ -17,6 +17,7 @@ inline hooks* g_hooks = nullptr;
 struct Config
 {
     bool cheat_damage;
+    bool tailwinds;
 };
 
 inline Config g_config;

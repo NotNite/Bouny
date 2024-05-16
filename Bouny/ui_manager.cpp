@@ -58,6 +58,7 @@ void ui_manager::draw()
     if (ImGui::Begin("Stuff"))
     {
         ImGui::Checkbox("Cheat damage", &g_config.cheat_damage);
+        ImGui::Checkbox("Tailwinds", &g_config.tailwinds);
         if (ImGui::Button("Hook all bp_"))
         {
             for (int i = 0; i < 100000; i++)

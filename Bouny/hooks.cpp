@@ -17,18 +17,30 @@ hooks::hooks()
                     return_value = original(self, other, return_value, num_args, args);
                 });
 
-    /*hook_script("bpatt_add", [](YYTK::CInstance* self, YYTK::CInstance* other,
+    static bool tailwinds_triggered = false;
+    hook_script("bpatt_add", [](YYTK::CInstance* self, YYTK::CInstance* other,
                                 YYTK::RValue& return_value, int num_args, YYTK::RValue** args,
                                 ScriptFunction* original)
     {
-        return_value = original(self, other, return_value, num_args, args);
-        static bool triggered = false;
-        if (!triggered)
+        if (!tailwinds_triggered && g_config.tailwinds)
         {
-            triggered = true;
-            g_hooks->get_script("bp_examples")(self, other, return_value, 0, nullptr);
+            tailwinds_triggered = true;
+            auto arg = RValue(g_module_interface->GetRunnerInterface().Script_Find_Id("bp_tailwind_permanent"));
+            RValue* arg_ptr = &arg;
+            auto arg_array = &arg_ptr;
+            original(self, other, return_value, 1, arg_array);
         }
-    });*/
+
+        return_value = original(self, other, return_value, num_args, args);
+    });
+
+    hook_script("scrdt_encounter", [](YYTK::CInstance* self, YYTK::CInstance* other,
+                                      YYTK::RValue& return_value, int num_args, YYTK::RValue** args,
+                                      ScriptFunction* original)
+    {
+        tailwinds_triggered = false;
+        return_value = original(self, other, return_value, num_args, args);
+    });
 }
 
 YYTK::RValue& detour_func(YYTK::CInstance* self, YYTK::CInstance* other, YYTK::RValue& return_value,
