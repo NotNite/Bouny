@@ -12,10 +12,7 @@ std::string utils::rvalue_to_string(YYTK::RValue* rvalue)
 
 int utils::hook_and_log(std::string name)
 {
-    return g_hooks->hook_script(name, [name](YYTK::CInstance* self, YYTK::CInstance* other,
-                                      YYTK::RValue& return_value, int num_args,
-                                      YYTK::RValue** args,
-                                      ScriptFunction* original)
+    return g_hooks->hook_script(name, [name](auto self, auto other, auto return_value, auto num_args, auto args, auto original)
     {
         original(self, other, return_value, num_args, args);
 
