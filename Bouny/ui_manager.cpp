@@ -50,7 +50,6 @@ ui_manager::ui_manager()
     g_module_interface->Print(CM_LIGHTGREEN, "Registered all UI callbacks!");
 }
 
-
 void ui_manager::draw()
 {
     ImGui::ShowDemoWindow();
@@ -99,60 +98,131 @@ void ui_manager::draw()
 
     ImGui::End();
 
-    if (ImGui::Begin("Room"))
+    CRoom* room = nullptr;
+    g_module_interface->GetCurrentRoomData(room);
+
+
+    if (room != nullptr)
     {
-        CRoom* room = nullptr;
-        g_module_interface->GetCurrentRoomData(room);
+        std::map<int, CLayer*> layer_map = {};
+        std::map<int, CLayerElementBase*> element_map = {};
+        std::map<int, std::list<CLayerElementBase*>> layer_element_map = {};
+        static std::list<int> open_layers = {};
+        static std::list<int> open_elements = {};
 
-        if (room == nullptr)
+        auto layers = room->m_Layers;
+        auto layer = layers.m_First;
+        while (layer != nullptr)
         {
-            ImGui::Text("Instance was null.");
-        }
-        else
-        {
-            auto layers = room->m_Layers;
-            auto layer = layers.m_First;
-            while (layer != nullptr)
+            layer_map[layer->m_Id] = layer;
+            layer_element_map[layer->m_Id] = {};
+
+            auto elements = layer->m_Elements;
+            auto element = elements.m_First;
+            while (element != nullptr)
             {
-                ImGui::Text("name=%s id=%d", layer->m_Name, layer->m_Id);
+                element_map[element->m_ID] = element;
+                layer_element_map[layer->m_Id].push_back(element);
+                element = element->m_Flink;
+            }
 
-                auto elements = layer->m_Elements;
-                auto element = elements.m_First;
-                while (element != nullptr)
+            layer = layer->m_Flink;
+        }
+
+
+        if (ImGui::Begin("Room"))
+        {
+            for (auto& [id, layer] : layer_map)
+            {
+                auto name = std::format("{} ({})##layer_toggle_{}",
+                                        layer->m_Name == nullptr ? "Unnamed" : layer->m_Name, id, id);
+                if (ImGui::Button(name.c_str()))
                 {
-                    ImGui::Text("  name=%s id=%d type=%d", element->m_Name, element->m_ID, element->m_Type);
-                    if (element->m_Type == 2)
+                    if (std::ranges::find(open_layers, id) == open_layers.end())
                     {
-                        auto instance = reinterpret_cast<CLayerInstanceElement*>(element);
-                        if (instance->m_Instance != nullptr)
-                        {
-                            g_module_interface->EnumInstanceMembers(
-                                RValue(instance->m_Instance),
-                                [](const char* name, RValue* value) -> bool
-                                {
-                                    if (name == nullptr || value == nullptr || value->m_Kind == VALUE_UNSET)
-                                        return false;
-                                    ImGui::Text(
-                                        "      %s=%s", name,
-                                        value->AsString().data()
-                                    );
-                                    return false;
-                                });
-                        }
+                        open_layers.push_back(id);
                     }
-                    if (element->m_Type == 4)
+                    else
                     {
-                        auto sprite = reinterpret_cast<CLayerSpriteElement*>(element);
-                        ImGui::Text("    sprite=%s", sprite->m_SpriteIndex);
+                        open_layers.remove(id);
                     }
-                    element = element->m_Flink;
                 }
-
-                layer = layer->m_Flink;
             }
         }
+        ImGui::End();
+
+        std::list<int> layers_to_remove = {};
+        for (auto id : open_layers)
+        {
+            if (!layer_map.contains(id))
+            {
+                layers_to_remove.push_back(id);
+                continue;
+            }
+
+            auto layer = layer_map[id];
+            auto name = std::format("Layer {} ({})##layer_{}", layer->m_Name == nullptr ? "Unnamed" : layer->m_Name, id, id);
+            bool open = true;
+            if (ImGui::Begin(name.c_str(), &open))
+            {
+                for (auto element : layer_element_map[id])
+                {
+                    auto name = std::format("{} ({})##element_toggle_{}",
+                                            element->m_Name == nullptr ? "Unnamed" : element->m_Name, element->m_ID,
+                                            element->m_ID);
+                    if (ImGui::Button(name.c_str()))
+                    {
+                        if (std::ranges::find(open_elements, element->m_ID) == open_elements.end())
+                        {
+                            open_elements.push_back(element->m_ID);
+                        }
+                        else
+                        {
+                            open_elements.remove(element->m_ID);
+                        }
+                    }
+                }
+            }
+
+            ImGui::End();
+            if (!open) layers_to_remove.push_back(id);
+        }
+        for (auto id : layers_to_remove) open_layers.remove(id);
+
+        std::list<int> elements_to_remove = {};
+        for (auto id : open_elements)
+        {
+            if (!element_map.contains(id))
+            {
+                elements_to_remove.push_back(id);
+                continue;
+            }
+
+            auto element = element_map[id];
+            auto name = std::format("Element {} ({})##element_{}", element->m_Name == nullptr ? "Unnamed" : element->m_Name,
+                                    element->m_ID, element->m_ID);
+            bool open = true;
+            if (ImGui::Begin(name.c_str(), &open))
+            {
+                if (element->m_Type == 2)
+                {
+                    auto instance = static_cast<CLayerInstanceElement*>(element);
+                    g_module_interface->EnumInstanceMembers(instance->m_Instance,
+                                                            [](const char* name, RValue* value) -> bool
+                                                            {
+                                                                ImGui::Text(
+                                                                    "%s: %s", name,
+                                                                    utils::rvalue_to_string(value).c_str());
+                                                                return false;
+                                                            });
+                }
+            }
+
+            ImGui::End();
+            if (!open) elements_to_remove.push_back(id);
+        }
+        for (auto id : elements_to_remove) open_elements.remove(id);
     }
-    ImGui::End();
 }
 
 void ui_manager::frame_callback(YYTK::FWFrame& FrameContext)
