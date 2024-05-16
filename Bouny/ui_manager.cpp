@@ -2,35 +2,7 @@
 #include "globals.h"
 #include "utils.h"
 
-#include <fstream>
 #include <numeric>
-
-void dump_for_ida()
-{
-    auto base = reinterpret_cast<uintptr_t>(GetModuleHandle(nullptr));
-
-    std::ofstream file("dump.txt");
-
-    for (int id = 0; id < 100000; id++)
-    {
-        CScript* script = nullptr;
-        auto success = g_module_interface->GetScriptData(id, script);
-        if (!AurieSuccess(success)) continue;
-
-        if (script == nullptr) continue;
-
-        auto functions = script->m_Functions;
-        if (functions == nullptr)continue;
-
-        auto func = functions->m_ScriptFunction;
-        if (func == nullptr)continue;
-
-        auto rva = reinterpret_cast<uintptr_t>(func) - base;
-        file << script->m_Name << " " << std::hex << rva << '\n';
-    }
-
-    file.close();
-}
 
 ui_manager::ui_manager()
 {
@@ -86,9 +58,19 @@ void ui_manager::draw()
     if (ImGui::Begin("Stuff"))
     {
         ImGui::Checkbox("Cheat damage", &g_config.cheat_damage);
-        if (ImGui::Button("Dump for IDA"))
+        if (ImGui::Button("Hook all bp_"))
         {
-            dump_for_ida();
+            for (int i = 0; i < 100000; i++)
+            {
+                CScript* script = nullptr;
+                g_module_interface->GetScriptData(i, script);
+                if (script == nullptr) continue;
+                auto name = std::string(script->m_Name);
+                if (name.starts_with("bp_"))
+                {
+                    utils::hook_and_log(name);
+                }
+            }
         }
 
         static std::string buffer;
@@ -99,35 +81,7 @@ void ui_manager::draw()
             auto script_name = std::string(buffer);
             if (!script_map.contains(script_name))
             {
-                auto id = g_hooks->hook_script(buffer, [script_name](YYTK::CInstance* self, YYTK::CInstance* other,
-                                                                     YYTK::RValue& return_value, int num_args,
-                                                                     YYTK::RValue** args,
-                                                                     ScriptFunction* original)
-                {
-                    original(self, other, return_value, num_args, args);
-
-                    if (num_args == 0)
-                    {
-                        g_module_interface->Print(CM_GRAY, "%s() -> %s", script_name.c_str(),
-                                                  utils::rvalue_to_string(&return_value).c_str());
-                    }
-                    else
-                    {
-                        std::string args_str = std::accumulate(args, args + num_args, std::string{},
-                                                               [](std::string acc, YYTK::RValue* arg)
-                                                               {
-                                                                   return acc + utils::rvalue_to_string(arg) + ", ";
-                                                               });
-
-                        // remove last ,
-                        args_str.pop_back();
-                        args_str.pop_back();
-
-                        g_module_interface->Print(CM_GRAY, "%s(%s) -> %s", script_name.c_str(), args_str.c_str(),
-                                                  utils::rvalue_to_string(&return_value).c_str());
-                    }
-                });
-
+                auto id = utils::hook_and_log(script_name);
                 script_map[script_name] = id;
             }
         }

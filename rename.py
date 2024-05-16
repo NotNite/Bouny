@@ -204,7 +204,7 @@ def handle_gml_funcs(addr):
         idaapi.set_name(func, func_name, idaapi.SN_FORCE)
 
         # is this correct?
-        func_ref = ida_bytes.get_qword(addr + 16) - 8
+        func_ref = ida_bytes.get_qword(addr + 16) + 8
         idaapi.set_name(func_ref, f"funcref_{func_name}", idaapi.SN_FORCE)
 
         try_set_func_arg_type(func, 0, "CInstance", 1, "self")

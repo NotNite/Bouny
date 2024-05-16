@@ -4,5 +4,6 @@
 class utils
 {
 public:
-    static std::string rvalue_to_string(const YYTK::RValue* rvalue);
+    static std::string rvalue_to_string(YYTK::RValue* rvalue);
+    static int hook_and_log(std::string name);
 };

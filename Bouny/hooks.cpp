@@ -1,5 +1,6 @@
 ﻿#include "hooks.h"
 #include "globals.h"
+#include "utils.h"
 
 static int* current_hook_id = static_cast<int*>(malloc(sizeof(int)));
 static int hook_index = 0;
@@ -7,7 +8,7 @@ static int hook_index = 0;
 hooks::hooks()
 {
     *current_hook_id = -1;
-    
+
     hook_script("scr_pattern_deal_damage_enemy_subtract",
                 [](YYTK::CInstance* self, YYTK::CInstance* other,
                    YYTK::RValue& return_value, int num_args, YYTK::RValue** args,
