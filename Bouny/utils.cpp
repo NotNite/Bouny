@@ -26,6 +26,7 @@ std::map<RValueType, std::string> names = {
 
 std::string utils::rvalue_to_string(YYTK::RValue* rvalue)
 {
+    if (rvalue == nullptr) return "nullptr";
     if (rvalue->m_Kind == VALUE_UNSET) return "unset";
     return std::string(rvalue->AsString());
 }
@@ -64,7 +65,7 @@ int utils::hook_and_log(std::string name)
     return g_hooks->hook_script(
         name, [name](auto self, auto other, auto return_value, auto num_args, auto args, auto original)
         {
-            original(self, other, return_value, num_args, args);
+            return_value = original(self, other, return_value, num_args, args);
             log_hook(name, return_value, num_args, args);
         });
 }

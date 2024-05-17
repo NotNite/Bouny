@@ -4,7 +4,10 @@ struct CInstance;
 struct CPhysicsObject;
 struct CSkeletonInstance;
 
-struct YYObjectBase {};
+struct YYObjectBase {
+  virtual ~YYObjectBase();
+  virtual RValue *InternalGetYYVarRef(int yyvar_val);
+};
 
 template <typename TKey, typename TValue> struct CHashMapElement {
   TValue m_Value;
