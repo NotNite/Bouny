@@ -1,0 +1,18 @@
+{
+  "default-registry": {
+    "kind": "git",
+    "baseline": "b3c870d4f79febf73775295775d388168a7b72f7",
+    "repository": "https://github.com/microsoft/vcpkg"
+  },
+  "registries": [
+    {
+      "kind": "git",
+      "repository": "https://github.com/NotNite/aurie-vcpkg.git",
+      "packages": [
+        "aurie",
+        "yytoolkit"
+      ],
+      "baseline": "7b550592505b78bf58abb6e2b62f9015b178e2e6"
+    }
+  ]
+}
