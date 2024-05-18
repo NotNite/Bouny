@@ -1,6 +1,6 @@
 # Bouny
 
-rabbit and steel fuckery
+Rabbit and Steel reverse engineering.
 
 ## Dependencies
 
@@ -18,8 +18,6 @@ Uses vcpkg:
 ```shell
 git submodule update --init --recursive -f
 .\vcpkg\bootstrap-vcpkg.bat
-.\vcpkg\vcpkg install
-.\vcpkg\vcpkg integrate install
 ```
 
 Then build with MSBuild. Copy Bouny.dll to mods/Aurie. Any other .dlls (like asmjit) go in the root game folder.

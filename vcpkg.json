@@ -1,5 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/microsoft/vcpkg-tool/main/docs/vcpkg.schema.json",
+  "builtin-baseline": "bd2b54836beed96e1efbe9aaf8ee800f5448856d",
   "dependencies": [
     "aurie",
     "yytoolkit",
