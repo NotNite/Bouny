@@ -2,6 +2,11 @@
 #include "globals.h"
 #include "utils.h"
 
+#include <imgui.h>
+#include <imgui_impl_dx11.h>
+#include <imgui_impl_win32.h>
+#include <imgui_stdlib.h>
+
 #include <numeric>
 
 ui_manager::ui_manager()
@@ -161,7 +166,8 @@ void ui_manager::draw()
             }
 
             auto layer = layer_map[id];
-            auto name = std::format("Layer {} ({})##layer_{}", layer->m_Name == nullptr ? "Unnamed" : layer->m_Name, id, id);
+            auto name = std::format("Layer {} ({})##layer_{}", layer->m_Name == nullptr ? "Unnamed" : layer->m_Name, id,
+                                    id);
             bool open = true;
             if (ImGui::Begin(name.c_str(), &open))
             {
@@ -199,7 +205,8 @@ void ui_manager::draw()
             }
 
             auto element = element_map[id];
-            auto name = std::format("Element {} ({})##element_{}", element->m_Name == nullptr ? "Unnamed" : element->m_Name,
+            auto name = std::format("Element {} ({})##element_{}",
+                                    element->m_Name == nullptr ? "Unnamed" : element->m_Name,
                                     element->m_ID, element->m_ID);
             bool open = true;
             if (ImGui::Begin(name.c_str(), &open))
@@ -240,6 +247,33 @@ void ui_manager::frame_callback(YYTK::FWFrame& FrameContext)
         ImGui_ImplWin32_NewFrame();
 
         ImGui::NewFrame();
+
+        auto io = ImGui::GetIO();
+        if ((io.WantCaptureMouse || io.MouseDrawCursor) && !(io.ConfigFlags & ImGuiConfigFlags_NoMouseCursorChange))
+        {
+            static std::map<ImGuiMouseCursor, HCURSOR> Cursor = {
+                {ImGuiMouseCursor_Arrow, LoadCursor(nullptr, IDC_ARROW)},
+                {ImGuiMouseCursor_TextInput, LoadCursor(nullptr, IDC_IBEAM)},
+                {ImGuiMouseCursor_ResizeAll, LoadCursor(nullptr, IDC_SIZEALL)},
+                {ImGuiMouseCursor_ResizeNS, LoadCursor(nullptr, IDC_SIZENS)},
+                {ImGuiMouseCursor_ResizeEW, LoadCursor(nullptr, IDC_SIZEWE)},
+                {ImGuiMouseCursor_ResizeNESW, LoadCursor(nullptr, IDC_SIZENESW)},
+                {ImGuiMouseCursor_ResizeNWSE, LoadCursor(nullptr, IDC_SIZENWSE)},
+                {ImGuiMouseCursor_Hand, LoadCursor(nullptr, IDC_HAND)},
+                {ImGuiMouseCursor_NotAllowed, LoadCursor(nullptr, IDC_NO)}
+            };
+            auto cursor = ImGui::GetMouseCursor();
+
+            if (cursor == ImGuiMouseCursor_None || io.MouseDrawCursor)
+            {
+                SetCursor(nullptr);
+            }
+            else
+            {
+                SetCursor(Cursor[cursor]);
+            }
+        }
+
         draw();
         ImGui::Render();
         g_context->OMSetRenderTargets(1, &g_render_target_view, nullptr);
@@ -269,8 +303,8 @@ void ui_manager::resize_callback(YYTK::FWResize& ResizeContext)
         g_context->OMSetRenderTargets(1, &g_render_target_view, nullptr);
 
         D3D11_VIEWPORT vp;
-        vp.Width = std::get<2>(ResizeContext.Arguments());
-        vp.Height = std::get<3>(ResizeContext.Arguments());
+        vp.Width = static_cast<float>(std::get<2>(ResizeContext.Arguments()));
+        vp.Height = static_cast<float>(std::get<3>(ResizeContext.Arguments()));
         vp.MinDepth = 0.0f;
         vp.MaxDepth = 1.0f;
         vp.TopLeftX = 0;
@@ -321,8 +355,27 @@ void ui_manager::wnd_proc_callback(YYTK::FWWndProc& WndProcContext)
     {
         if (ImGui_ImplWin32_WndProcHandler(hWnd, msg, wParam, lParam))
         {
-            WndProcContext.Call();
             WndProcContext.Override(1);
+        }
+
+        auto io = ImGui::GetIO();
+        if (io.WantCaptureKeyboard || io.WantTextInput)
+        {
+            if (msg == WM_KEYDOWN || msg == WM_KEYUP || msg == WM_SYSKEYDOWN || msg == WM_SYSKEYUP || msg == WM_CHAR)
+            {
+                WndProcContext.Override(1);
+            }
+        }
+
+        if (io.WantCaptureMouse)
+        {
+            if (msg == WM_LBUTTONDOWN || msg == WM_LBUTTONUP || msg == WM_LBUTTONDBLCLK ||
+                msg == WM_RBUTTONDOWN || msg == WM_RBUTTONUP || msg == WM_RBUTTONDBLCLK ||
+                msg == WM_MBUTTONDOWN || msg == WM_MBUTTONUP || msg == WM_MBUTTONDBLCLK ||
+                msg == WM_MOUSEWHEEL || msg == WM_MOUSEHWHEEL)
+            {
+                WndProcContext.Override(1);
+            }
         }
     }
 }

@@ -1,4 +1,5 @@
 ﻿#include "hooks.h"
+#include <YYToolkit/Shared.hpp>
 #include "globals.h"
 #include "utils.h"
 
