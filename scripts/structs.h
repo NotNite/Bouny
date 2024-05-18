@@ -1,34 +1,55 @@
-// Forward declarations
 struct RValue;
 struct CInstance;
 struct CPhysicsObject;
 struct CSkeletonInstance;
+struct YYObjectBase;
+struct CObjectGM;
+struct CEvent;
 
-struct YYObjectBase {
-  virtual ~YYObjectBase();
-  virtual RValue *InternalGetYYVarRef(int yyvar_val);
+struct YYObjectBase_vtable {
+  void (*dtor)(YYObjectBase *);
+  RValue *(*InternalGetYYVarRef)(YYObjectBase *, int);
 };
 
-template <typename TKey, typename TValue> struct CHashMapElement {
-  TValue m_Value;
-  TKey m_Key;
+struct YYObjectBase {
+  YYObjectBase_vtable *vtable;
+};
+
+struct CHashMapElement_int_CObjectGM_ptr_2 {
+  CObjectGM *m_Value;
+  int m_Key;
   unsigned __int32 m_Hash;
 };
 
-template <typename TKey, typename TValue, int TInitialMask> struct CHashMap {
+struct CHashMapElement_int_CEvent_ptr_3 {
+  CEvent *m_Value;
+  int m_Key;
+  unsigned __int32 m_Hash;
+};
+
+struct CHashMap_int_CObjectGM_ptr_2 {
   __int32 m_CurrentSize;
   __int32 m_UsedCount;
   __int32 m_CurrentMask;
   __int32 m_GrowThreshold;
-  CHashMapElement<TKey, TValue> *m_Elements;
-  void (*m_DeleteValue)(TKey *Key, TValue *Value);
+  CHashMapElement_int_CObjectGM_ptr_2 *m_Elements;
+  void (*m_DeleteValue)(int *Key, CObjectGM **Value);
 };
 
-using PFUNC_YYGMLScript = RValue &(*)(CInstance *Self, CInstance *Other,
-                                      RValue &Result, int ArgumentCount,
-                                      RValue **Arguments);
-using PFUNC_YYGML = void (*)(CInstance *Self, CInstance *Other);
-using PFUNC_RAW = void (*)();
+struct CHashMap_int_CEvent_ptr_3 {
+  __int32 m_CurrentSize;
+  __int32 m_UsedCount;
+  __int32 m_CurrentMask;
+  __int32 m_GrowThreshold;
+  CHashMapElement_int_CEvent_ptr_3 *m_Elements;
+  void (*m_DeleteValue)(int *Key, CEvent **Value);
+};
+
+typedef RValue &(*PFUNC_YYGMLScript)(CInstance *Self, CInstance *Other,
+                                     RValue &Result, int ArgumentCount,
+                                     RValue **Arguments);
+typedef void (*PFUNC_YYGML)(CInstance *Self, CInstance *Other);
+typedef void (*PFUNC_RAW)();
 
 struct YYGMLFuncs {
   const char *m_Name;
@@ -86,7 +107,7 @@ struct RToken {
 };
 
 struct CCode {
-  int (**_vptr$CCode)(void);
+  void *vtable;
   CCode *m_Next;
   int m_Kind;
   int m_Compiled;
@@ -112,9 +133,9 @@ struct CEvent {
   __int32 m_OwnerObjectID;
 };
 
-template <typename T> struct LinkedList {
-  T *m_First;
-  T *m_Last;
+struct LinkedList_CInstance {
+  CInstance *m_First;
+  CInstance *m_Last;
   __int32 m_Count;
 };
 
@@ -137,11 +158,11 @@ struct CPhysicsDataGM {
 struct CObjectGM {
   const char *m_Name;
   CObjectGM *m_ParentObject;
-  CHashMap<int, CObjectGM *, 2> *m_ChildrenMap;
-  CHashMap<int, CEvent *, 3> *m_EventsMap;
+  CHashMap_int_CObjectGM_ptr_2 *m_ChildrenMap;
+  CHashMap_int_CEvent_ptr_3 *m_EventsMap;
   CPhysicsDataGM m_PhysicsData;
-  LinkedList<CInstance> m_Instances;
-  LinkedList<CInstance> m_InstancesRecursive;
+  LinkedList_CInstance m_Instances;
+  LinkedList_CInstance m_InstancesRecursive;
   unsigned __int32 m_Flags;
   __int32 m_SpriteIndex;
   __int32 m_Depth;

@@ -12,3 +12,5 @@ x86/
 dump.txt
 
 /vcpkg_installed*/
+
+/scripts/__pycache__

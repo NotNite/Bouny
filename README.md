@@ -9,7 +9,9 @@ Rabbit and Steel reverse engineering.
 
 ## Reverse engineering
 
-Import the ida_structs.hpp header file into IDA (Options > Compiler > Source parser = clang), then run the rename.py script. It should automatically fix function names and arguments, along with provide context for static variables, functions, and function references.
+Import the structs.h header file into your decompiler, then run the rename.py script. It should automatically fix function names and arguments, along with provide context for static variables, functions, and function references.
+
+Currently only supports IDA.
 
 ## Compiling
 
