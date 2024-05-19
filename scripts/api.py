@@ -74,7 +74,6 @@ try:
                 ida_ida.inf_get_min_ea(), ida_ida.inf_get_max_ea(), patterns, 0
             )
             if addr == ida_idaapi.BADADDR:
-                print("oops")
                 return None
 
             if signature.startswith("E8") or signature.startswith("E9"):
