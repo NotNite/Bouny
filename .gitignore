@@ -14,3 +14,5 @@ dump.txt
 /vcpkg_installed*/
 
 /scripts/__pycache__
+/scripts/*.class
+pyrightconfig.json
