@@ -142,7 +142,9 @@ try:
 
             if ptr is not None:
                 for _ in range(ptr):
-                    type_tinfo.create_ptr(type_tinfo)
+                    new_tinfo = ida_typeinf.tinfo_t()
+                    new_tinfo.create_ptr(type_tinfo)
+                    type_tinfo = new_tinfo
 
             orig_type = func_data[index].type
             if orig_type.get_size() < type_tinfo.get_size():
