@@ -125,3 +125,22 @@ def parse_init_llvm():
 
 
 parse_init_llvm()
+
+def sig_replace(sig: str, name: str, args: list[tuple[str, int, str]], ret: tuple[str, int]):
+    global api
+    scan = api.scan(sig)
+    if scan is None:
+        print(f"Could not find {name}")
+        return
+    print(f"{name}: {scan:02X}")
+    api.set_name(scan, name, "function")
+    for i, arg in enumerate(args):
+        api.set_func_arg_type(scan, i, arg[0], arg[1], arg[2])
+    api.set_func_ret_type(scan, ret[0], ret[1])
+
+sig_replace("48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 48 8B D9 BE ?? ?? ?? ?? 8B 49 0C 44 8B C6 83 E1 1F 48 8B FA 41 D3 E0 41 F6 C0 46 74 08 48 8B CB E8 ?? ?? ?? ?? 8B 4F 0C",
+        "COPY_RValue", [("RValue", 1, "dest"), ("const RValue", 1, "src")], ("void", 0))
+sig_replace("E8 ?? ?? ?? ?? 8B 4B 64", "FREE_RValue__Pre", [("RValue", 1, "ptr")], ("void", 0))
+sig_replace("E8 ?? ?? ?? ?? 48 63 D5", "YYFree", [("void", 1, "ptr")], ("void", 0))
+sig_replace("E8 ?? ?? ?? ?? 4D 85 E4 74 08", "?dec@?$_RefThing@PEBD@@QEAAXXZ", [("char", 2, "self")], ("void", 0))
+# sig_replace("", "", [("", 0, "")], ("", 0))
