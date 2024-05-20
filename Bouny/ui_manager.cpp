@@ -106,6 +106,20 @@ void ui_manager::draw()
     CRoom* room = nullptr;
     g_module_interface->GetCurrentRoomData(room);
 
+    CInstance* global = nullptr;
+    g_module_interface->GetGlobalInstance(&global);
+    if (global != nullptr)
+    {
+        if (ImGui::Begin("Global"))
+        {
+            auto value = RValue(global);
+            std::map<std::string, std::string> results;
+            utils::enumerate_members(value, results, true);
+            static std::string search_query;
+            utils::draw_search(results, search_query);
+        }
+        ImGui::End();
+    }
 
     if (room != nullptr)
     {
@@ -214,14 +228,11 @@ void ui_manager::draw()
                 if (element->m_Type == 2)
                 {
                     auto instance = static_cast<CLayerInstanceElement*>(element);
-                    g_module_interface->EnumInstanceMembers(instance->m_Instance,
-                                                            [](const char* name, RValue* value) -> bool
-                                                            {
-                                                                ImGui::Text(
-                                                                    "%s: %s", name,
-                                                                    utils::rvalue_to_string(value).c_str());
-                                                                return false;
-                                                            });
+                    auto value = RValue(instance->m_Instance);
+                    std::map<std::string, std::string> results;
+                    utils::enumerate_members(value, results);
+                    static std::string search_query;
+                    utils::draw_search(results, search_query);
                 }
             }
 

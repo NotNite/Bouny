@@ -1,8 +1,7 @@
-﻿#include "utils.h"
-
+﻿#include "globals.h"
+#include "utils.h"
+#include <imgui_stdlib.h>
 #include <numeric>
-
-#include "globals.h"
 
 std::map<RValueType, std::string> names = {
     {VALUE_REAL, "real"},
@@ -42,7 +41,7 @@ void utils::log_hook(std::string name, YYTK::RValue& return_value, int num_args,
         std::string args_str = std::accumulate(args, args + num_args, std::string{},
                                                [](std::string acc, YYTK::RValue* arg)
                                                {
-                                                   auto arg_str = rvalue_to_string(arg);
+                                                   auto arg_str = utils::rvalue_to_string(arg);
                                                    auto type_str = names.contains(arg->m_Kind)
                                                                        ? names[arg->m_Kind]
                                                                        : "unknown";
@@ -68,4 +67,36 @@ int utils::hook_and_log(std::string name)
             return_value = original(self, other, return_value, num_args, args);
             log_hook(name, return_value, num_args, args);
         });
+}
+
+void utils::draw_search(std::map<std::string, std::string>& search_results, std::string& search_query)
+{
+    ImGui::InputText("Search", &search_query);
+    ImGui::Separator();
+    if (ImGui::BeginChild("##search_results", ImGui::GetContentRegionAvail()))
+    {
+        for (auto& [key, value] : search_results)
+        {
+            auto key_lower = key;
+            std::ranges::transform(key_lower, key_lower.begin(), ::tolower);
+            auto search_query_lower = search_query;
+            std::ranges::transform(search_query_lower, search_query_lower.begin(), ::tolower);
+            if (search_query_lower.empty() || key_lower.contains(search_query_lower))
+            {
+                ImGui::Text("%s: %s", key.c_str(), value.c_str());
+            }
+        }
+    }
+    ImGui::EndChild();
+}
+
+void utils::enumerate_members(YYTK::RValue rvalue, std::map<std::string, std::string>& results, bool ignore_functions)
+{
+    g_module_interface->EnumInstanceMembers(rvalue, [&results, ignore_functions](const char* name, YYTK::RValue* value)
+    {
+        auto str = utils::rvalue_to_string(value);
+        if (ignore_functions && str == "function") return false;
+        results[std::string(name)] = str;
+        return false;
+    });
 }
