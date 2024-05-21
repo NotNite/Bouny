@@ -79,7 +79,9 @@ try:
             if signature.startswith("E8") or signature.startswith("E9"):
                 # Displacement
                 offset = self.read_u32(addr + 1)
-                offset = ~0x7FFFFFFF | offset  # convert to signed
+                if offset > 0x7FFFFFFF:
+                    # Convert to signed
+                    offset = ~0x7FFFFFFF | offset
                 addr += 5 + offset
 
             return addr
