@@ -136,16 +136,19 @@ def sig_replace(
         print(f"Could not find {name}")
         return
     print(f"{name}: {scan:02X}")
-    api.set_name(scan, name, "function")
+    if not api.set_name(scan, name, "function"):
+        print(f"{name}: Error setting function name")
     for i, arg in enumerate(args):
-        api.set_func_arg_type(scan, i, arg[0], arg[1], arg[2])
-    api.set_func_ret_type(scan, ret[0], ret[1])
+        if not api.set_func_arg_type(scan, i, arg[0], arg[1], arg[2]):
+            print(f"{name}: Error setting argument {arg[2]}")
+    if not api.set_func_ret_type(scan, ret[0], ret[1]):
+        print(f"{name}: Error setting return type")
 
 
 sig_replace(
     "48 89 5C 24 ?? 48 89 74 24 ?? 57 48 83 EC 20 48 8B D9 BE ?? ?? ?? ?? 8B 49 0C 44 8B C6 83 E1 1F 48 8B FA 41 D3 E0 41 F6 C0 46 74 08 48 8B CB E8 ?? ?? ?? ?? 8B 4F 0C",
     "COPY_RValue",
-    [("RValue", 1, "dest"), ("const RValue", 1, "src")],
+    [("RValue", 1, "dest"), ("RValue", 1, "src")],
     ("void", 0),
 )
 sig_replace(
