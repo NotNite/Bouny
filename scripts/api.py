@@ -43,11 +43,11 @@ class BaseApi(object):
         # type: (int) -> str
         pass
 
-    def set_func_arg_type(self, func, index, type, ptr, name):
+    def set_func_arg_type(self, address, index, type, ptr, name):
         # type: (int, int, str, int, str) -> bool
         pass
 
-    def set_func_ret_type(self, func, type, ptr):
+    def set_func_ret_type(self, address, type, ptr):
         # type: (int, str, int) -> bool
         pass
 
@@ -116,79 +116,110 @@ try:
                 return None
             return str.decode("utf-8")
 
-        def set_func_arg_type(self, func, index, type, ptr, name):
-            tinfo = ida_typeinf.tinfo_t()
-            if not ida_nalt.get_tinfo(tinfo, func):
-                return False
+        def create_primitive_type(self, tinfo_t, type):
+            primitives = {
+                'void': ida_typeinf.BTF_VOID,
+                'char': ida_typeinf.BTF_CHAR,
+                'int': ida_typeinf.BTF_INT,
+                'float': ida_typeinf.BTF_FLOAT,
+                'double': ida_typeinf.BTF_DOUBLE,
+                'bool': ida_typeinf.BTF_BOOL,
+                'int8': ida_typeinf.BTF_INT8,
+                'int16': ida_typeinf.BTF_INT16,
+                'int32': ida_typeinf.BTF_INT32,
+                'int64': ida_typeinf.BTF_INT64,
+                'uint8': ida_typeinf.BTF_UINT8,
+                'uint16': ida_typeinf.BTF_UINT16,
+                'uint32': ida_typeinf.BTF_UINT32,
+                'uint64': ida_typeinf.BTF_UINT64,
+            }
+            if type in primitives:
+                return tinfo_t.create_simple_type(primitives[type])
+            return False
 
-            func_data = ida_typeinf.func_type_data_t()
-            if not tinfo.get_func_details(func_data):
-                return False
-
-            if index >= func_data.size():
-                return False
-
-            if name is not None:
-                func_data[index].name = name
-
+        def create_type_object(self, type, ptr):
             type_tinfo = ida_typeinf.tinfo_t()
             idati = ida_typeinf.get_idati()
             if not type_tinfo.get_named_type(idati, type):
-                terminated = type + ";"
-                if not ida_typeinf.parse_decl(
-                    type_tinfo, idati, terminated, ida_typeinf.PT_SIL
-                ):
-                    return False
+                if not self.create_primitive_type(type_tinfo, type):
+                    terminated = type + f";"
+                    if not ida_typeinf.parse_decl(
+                        type_tinfo, idati, terminated, ida_typeinf.PT_SIL | ida_typeinf.PT_NDC | ida_typeinf.PT_TYP
+                    ):
+                        print(f": Could not parse type '{terminated}'")
+                        return None
 
             if ptr is not None:
                 for _ in range(ptr):
                     new_tinfo = ida_typeinf.tinfo_t()
                     new_tinfo.create_ptr(type_tinfo)
                     type_tinfo = new_tinfo
+            return type_tinfo
+
+        def set_func_arg_type(self, address, index, type, ptr, name):
+            tinfo = ida_typeinf.tinfo_t()
+            if not ida_nalt.get_tinfo(tinfo, address):
+                print(f": Could not get adress type info")
+                return False
+
+            func_data = ida_typeinf.func_type_data_t()
+            if not tinfo.get_func_details(func_data):
+                print(f": Could not create function type")
+                return False
+
+            if index >= func_data.size():
+                print(f": Argument index out of range")
+                return False
+
+            if name is not None:
+                func_data[index].name = name
+
+            type_tinfo = self.create_type_object(type, ptr)
+            if type_tinfo is None:
+                print(f": Could not create type object")
+                return False
 
             orig_type = func_data[index].type
             if orig_type.get_size() < type_tinfo.get_size():
+                print(f": Argument size mismatch")
                 return False
 
             func_data[index].type = type_tinfo
 
             new_tinfo = ida_typeinf.tinfo_t()
             if not new_tinfo.create_func(func_data):
+                print(f": Could not create function")
                 return False
 
-            return ida_typeinf.apply_tinfo(func, new_tinfo, ida_typeinf.TINFO_DEFINITE)
+            return ida_typeinf.apply_tinfo(address, new_tinfo, ida_typeinf.TINFO_DEFINITE)
 
-        def set_func_ret_type(self, func, type, ptr):
+        def set_func_ret_type(self, address, type, ptr):
             func_tinfo = ida_typeinf.tinfo_t()
-            if not ida_nalt.get_tinfo(func_tinfo, func):
+            if not ida_nalt.get_tinfo(func_tinfo, address):
+                print(f": Could not get adress type info")
                 return False
 
             func_data = ida_typeinf.func_type_data_t()
             if not func_tinfo.get_func_details(func_data):
+                print(f": Could not create function type")
                 return False
 
-            type_tinfo = ida_typeinf.tinfo_t()
-            idati = ida_typeinf.get_idati()
-            if not type_tinfo.get_named_type(idati, type):
-                terminated = type + ";"
-                if not ida_typeinf.parse_decl(
-                    type_tinfo, idati, terminated, ida_typeinf.PT_SIL
-                ):
-                    return False
-
-            if ptr is not None:
-                for _ in range(ptr):
-                    type_tinfo.create_ptr(type_tinfo)
+            type_tinfo = self.create_type_object(type, ptr)
+            if type_tinfo is None:
+                print(f": Could not create type object")
+                return False
 
             if func_data.rettype.get_size() < type_tinfo.get_size():
+                print(f": Argument size mismatch")
                 return False
 
             func_data.rettype = type_tinfo
             new_tinfo = ida_typeinf.tinfo_t()
             if not new_tinfo.create_func(func_data):
+                print(f": Could not create function")
                 return False
 
-            return ida_typeinf.apply_tinfo(func, new_tinfo, ida_typeinf.TINFO_DEFINITE)
+            return ida_typeinf.apply_tinfo(address, new_tinfo, ida_typeinf.TINFO_DEFINITE)
 
     api = IDAApi()
 except ImportError:
